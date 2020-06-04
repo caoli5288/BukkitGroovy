@@ -22,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -150,7 +149,7 @@ public class GroovyHandler extends PluginBase implements Listener, IDsl {
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] params) {
         try {
-            groovyObj.getCommands().execute(label, sender, Arrays.asList(params));
+            groovyObj.getCommands().execute(this, label, sender, params);
             return true;
         } catch (Exception e) {
             logger.log(Level.SEVERE, String.format("Exception occurred while execute command /%s %s", label, String.join(" ", params)));

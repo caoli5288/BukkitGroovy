@@ -51,9 +51,12 @@ class GroovyObj {
             commands[name] = params.find()
         }
 
-        def execute(String name, CommandSender sender, List<String> params) {
+        def execute(def delegate, String name, CommandSender sender, String[] params) {
             if (commands.containsKey(name)) {
-                commands[name](sender, params)
+                Closure closure = commands[name]
+                closure.delegate = delegate
+                closure.resolveStrategy = Closure.DELEGATE_FIRST
+                closure(sender, params)
             }
         }
 
