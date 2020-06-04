@@ -20,7 +20,15 @@ commands {
 listeners {
     // builtin event
     PlayerJoinEvent {
-        it.player.sendMessage "greeting!"
+        def player = it.player
+        def count = 0
+        task 20, 20, {
+            player.sendMessage "greeting!"
+            count++
+            if (count >= 5) {
+                it.cancel()
+            }
+        }
     }
 
     // event with priority
@@ -43,6 +51,7 @@ enable {
     if (a != null) {
         println a.text
     }   
+    runCommand "say hahah"
 }
 
 disable {

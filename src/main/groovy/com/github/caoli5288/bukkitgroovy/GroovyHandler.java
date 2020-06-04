@@ -2,6 +2,7 @@ package com.github.caoli5288.bukkitgroovy;
 
 import com.github.caoli5288.bukkitgroovy.dsl.GroovyObj;
 import com.github.caoli5288.bukkitgroovy.util.IDsl;
+import com.github.caoli5288.bukkitgroovy.util.Traits;
 import com.google.common.io.Files;
 import lombok.SneakyThrows;
 import org.bukkit.Server;
@@ -26,7 +27,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class GroovyHandler extends PluginBase implements Listener, IDsl {
+public class GroovyHandler extends PluginBase implements Listener, IDsl, Traits {
 
     private final BukkitGroovy parent;
     private final File container;

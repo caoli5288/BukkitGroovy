@@ -1,6 +1,7 @@
 package com.github.caoli5288.bukkitgroovy;
 
 import com.github.caoli5288.bukkitgroovy.util.MavenLibs;
+import com.github.caoli5288.bukkitgroovy.util.Traits;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
@@ -24,7 +25,7 @@ import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
-public class BukkitGroovy extends JavaPlugin implements PluginLoader {
+public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
 
     private final Map<String, BiConsumer<CommandSender, String[]>> commands = new HashMap<>();
     private Listeners listeners;
