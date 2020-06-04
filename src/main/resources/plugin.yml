@@ -1,0 +1,7 @@
+name: BukkitGroovy
+main: com.github.caoli5288.bukkitgroovy.BukkitGroovy
+version: 1.0-SNAPSHOT
+
+commands:
+  groovy:
+    permission: groovy.admin
