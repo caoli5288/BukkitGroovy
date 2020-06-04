@@ -18,11 +18,18 @@ commands {
 }
 
 listeners {
-    playerjoinevent {
+    // builtin event
+    PlayerJoinEvent {
         it.player.sendMessage "greeting!"
     }
+
+    // event with priority
+    PlayerDeathEvent "HIGH", {
+        it.player.sendMessage "you death!"
+    }
     
-    BedwarsRel_bedwarsgameoverevent {
+    // third-party event
+    BedwarsRel_BedwarsGameOverEvent {
         server.shutdown()
     }
 }

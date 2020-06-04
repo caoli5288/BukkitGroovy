@@ -1,16 +1,15 @@
 package com.github.caoli5288.bukkitgroovy;
 
+import com.github.caoli5288.bukkitgroovy.dsl.GroovyObj;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
 import com.google.common.base.Preconditions;
 import groovy.lang.Closure;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Enumeration;
@@ -30,20 +29,20 @@ public class Listeners {
     private final Map<String, HandlerList> knownClasses = new HashMap<>();
     private final Set<String> loads = new HashSet<>();
 
-    public void listen(GroovyHandler handler, String name, Closure<?> closure) {
+    public void listen(GroovyHandler handler, String name, GroovyObj.ListenerObj obj) {
         loadClasses(name);
-        String lowName = name.toLowerCase();
-        if (knownClasses.containsKey(lowName)) {
-            listen(handler, knownClasses.get(lowName), closure);
+        if (knownClasses.containsKey(name)) {
+            listen(handler, knownClasses.get(name), obj);
         } else {
             handler.getLogger().warning(String.format("event %s not found", name));
         }
     }
 
-    private void listen(GroovyHandler handler, HandlerList handlers, Closure<?> closure) {
+    private void listen(GroovyHandler handler, HandlerList handlers, GroovyObj.ListenerObj obj) {
+        Closure<?> closure = obj.getClosure();
         closure.setDelegate(handler);
         closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-        handlers.register(new RegisteredListener(handler, (__, e) -> closure.call(e), EventPriority.NORMAL, handler, false));
+        handlers.register(new RegisteredListener(handler, (__, e) -> closure.call(e), obj.getOrder(), handler, false));
     }
 
     public void loadClasses() {
@@ -59,7 +58,7 @@ public class Listeners {
             Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
             if (plugin != null && loads.add(plugin.getName())) {
                 Class<?> cls = plugin.getClass();
-                loadClasses(plugin.getName().toLowerCase(), cls, "");
+                loadClasses(plugin.getName(), cls, "");
             }
         }
     }
@@ -78,8 +77,8 @@ public class Listeners {
                         Class<?> cls = cl.loadClass(name);
                         if (Event.class.isAssignableFrom(cls) && !Modifier.isAbstract(cls.getModifiers())) {
                             HandlerList handlers = lookupHandlers(cls);
-                            String simpleName = cls.getSimpleName().toLowerCase();
-                            knownClasses.put(namespace + "_" + simpleName, handlers);
+                            String simpleName = cls.getSimpleName();
+                            knownClasses.put(namespace + "_" + cls.getSimpleName(), handlers);
                             if (!knownClasses.containsKey(simpleName)) {
                                 knownClasses.put(simpleName, handlers);
                             }

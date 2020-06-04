@@ -141,7 +141,7 @@ public class Handlers {
                         GroovyHandler handler = new GroovyHandler(groovy, container, obj);
                         handlers.put(name, handler);// put first
                         groovy.getServer().getPluginManager().enablePlugin(handler);
-                        obj.getListeners().each((listener, closure) -> groovy.getListeners().listen(handler, listener, closure));
+                        obj.getListeners().each((listener, listenerObj) -> groovy.getListeners().listen(handler, listener, listenerObj));
                     } catch (Exception e) {
                         groovy.getLogger().log(Level.SEVERE, "Exception occurred while loading " + f, e);
                     }

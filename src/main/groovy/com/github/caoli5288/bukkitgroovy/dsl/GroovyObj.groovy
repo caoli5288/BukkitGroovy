@@ -2,6 +2,7 @@ package com.github.caoli5288.bukkitgroovy.dsl
 
 import com.github.caoli5288.bukkitgroovy.util.Utils
 import org.bukkit.command.CommandSender
+import org.bukkit.event.EventPriority
 
 import java.util.function.BiConsumer
 
@@ -33,12 +34,23 @@ class GroovyObj {
         def listeners = [:]
 
         def invokeMethod(String name, def params) {
-            listeners[name] = params.find()
+            params = params as List
+            if (params.size() == 1) {
+                listeners[name] = new ListenerObj(closure: params[0], order: EventPriority.NORMAL)
+            } else {
+                listeners[name] = new ListenerObj(closure: params[1], order: EventPriority.valueOf(params[0] as String))
+            }
         }
 
-        def each(BiConsumer<String, Closure> consumer) {
+        def each(BiConsumer<String, ListenerObj> consumer) {
             listeners.each { consumer(it.key, it.value) }
         }
+    }
+
+    class ListenerObj {
+
+        EventPriority order
+        Closure closure;
     }
 
     class Commands {
@@ -48,12 +60,13 @@ class GroovyObj {
         int size() { commands.size() }
 
         def invokeMethod(String name, def params) {
-            commands[name] = params.find()
+            params = params as List
+            commands[name] = params[0]
         }
 
         def execute(def delegate, String name, CommandSender sender, String[] params) {
             if (commands.containsKey(name)) {
-                Closure closure = commands[name]
+                Closure closure = commands[name] as Closure
                 closure.delegate = delegate
                 closure.resolveStrategy = Closure.DELEGATE_FIRST
                 closure(sender, params)
