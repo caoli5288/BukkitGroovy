@@ -1,6 +1,8 @@
 package com.github.caoli5288.bukkitgroovy;
 
 import com.github.caoli5288.bukkitgroovy.util.MavenLibs;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
@@ -14,15 +16,17 @@ import org.bukkit.plugin.UnknownDependencyException;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 public class BukkitGroovy extends JavaPlugin implements PluginLoader {
 
+    private final Map<String, BiConsumer<CommandSender, String[]>> commands = new HashMap<>();
     private Listeners listeners;
     private Handlers handlers;
 
@@ -43,6 +47,67 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader {
         handlers = new Handlers();
         getLogger().info(String.format("find %s builtin event classes", listeners.getKnownClasses().size()));
         getServer().getScheduler().runTask(this, () -> handlers.loads(this));
+        commands.put("list", this::list);
+        commands.put("reloads", this::reloads);
+        commands.put("loads", this::loads);
+        commands.put("unloads", this::unloads);
+        commands.put("reload", this::reload);
+        commands.put("load", this::load);
+        commands.put("unload", this::unload);
+        commands.put("run", this::run);
+    }
+
+    private void list(CommandSender sender, String[] params) {
+        String msg = handlers.getHandlers().keySet().toString();
+        sender.sendMessage(msg);
+    }
+
+    private void run(CommandSender sender, String[] params) {
+        handlers.run(this, sender, params[0], params);
+    }
+
+    private void load(CommandSender sender, String[] params) {
+        handlers.load(this, params[0]);
+    }
+
+    private void unload(CommandSender sender, String[] params) {
+        handlers.unload(this, params[0]);
+    }
+
+    private void reload(CommandSender sender, String[] params) {
+        handlers.reload(this, params[0]);
+    }
+
+    private void unloads(CommandSender sender, String[] params) {
+        handlers.unloads(this);
+    }
+
+    private void loads(CommandSender sender, String[] params) {
+        handlers.loads(this);
+    }
+
+    private void reloads(CommandSender sender, String[] params) {
+        handlers.reloads(this);
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] params) {
+        if (params.length == 0) {
+            sender.sendMessage("/groovy list");
+            sender.sendMessage("/groovy reloads");
+            sender.sendMessage("/groovy loads");
+            sender.sendMessage("/groovy unloads");
+            sender.sendMessage("/groovy reload <name>");
+            sender.sendMessage("/groovy load <name>");
+            sender.sendMessage("/groovy unload <name>");
+            sender.sendMessage("/groovy run <name> [param...]");
+        } else {
+            String param = params[0];
+            params = Arrays.copyOfRange(params, 1, params.length);
+            commands.get(param).accept(sender, params);
+            return true;
+        }
+        return false;
     }
 
     public Listeners getListeners() {

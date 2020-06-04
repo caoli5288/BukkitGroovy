@@ -4,10 +4,10 @@ import com.github.caoli5288.bukkitgroovy.dsl.GroovyObj;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
-import groovy.lang.Script;
 import groovy.util.DelegatingScript;
 import groovy.util.GroovyScriptEngine;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.PluginManager;
@@ -30,6 +30,10 @@ public class Handlers {
 
     private final Map<String, GroovyHandler> handlers = new HashMap<>();
     private GroovyScriptEngine shell;
+
+    public Map<String, GroovyHandler> getHandlers() {
+        return handlers;
+    }
 
     public GroovyScriptEngine getShell(BukkitGroovy groovy) {
         if (shell == null) {
@@ -76,6 +80,7 @@ public class Handlers {
         handlers.clear();
     }
 
+    @SuppressWarnings("unchecked")
     private void unload0(BukkitGroovy groovy, GroovyHandler handler) {
         PluginManager pm = groovy.getServer().getPluginManager();
         pm.disablePlugin(handler);
@@ -99,12 +104,14 @@ public class Handlers {
         }
     }
 
-    public void run(BukkitGroovy groovy, String name, String[] params) {
+    public void run(BukkitGroovy groovy, CommandSender sender, String name, String[] params) {
         File f = new File(groovy.getDataFolder(), name + ".groovy");
         if (f.isFile()) {
             GroovyScriptEngine shell = getShell(groovy);
             try {
-                DelegatingScript script = (DelegatingScript) shell.createScript(f.getName(), new Binding(params));
+                Binding binding = new Binding(params);
+                binding.setVariable("sender", sender);
+                DelegatingScript script = (DelegatingScript) shell.createScript(f.getName(), binding);
                 script.setDelegate(groovy);
                 script.run();
             } catch (Exception e) {

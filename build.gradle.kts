@@ -11,6 +11,9 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        setUrl("http://repository.i7mc.com:8008/")
+    }
 }
 
 dependencies {

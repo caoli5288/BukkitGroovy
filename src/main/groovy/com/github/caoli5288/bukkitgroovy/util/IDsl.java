@@ -5,8 +5,10 @@ import groovy.lang.Closure;
 public interface IDsl {
 
     default void apply(Closure<?> closure) {
-        closure.setDelegate(this);
-        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-        closure.call();
+        if (closure != null) {
+            closure.setDelegate(this);
+            closure.setResolveStrategy(Closure.DELEGATE_FIRST);
+            closure.call();
+        }
     }
 }
