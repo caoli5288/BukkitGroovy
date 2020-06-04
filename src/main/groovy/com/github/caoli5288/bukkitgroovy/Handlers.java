@@ -26,7 +26,7 @@ import java.util.logging.Level;
 public class Handlers {
 
     private static final Field SIMPLE_PLUGIN_MANAGER_commandMap = Utils.getAccessibleField(SimplePluginManager.class, "commandMap");
-    private static final Field SimpleCommandMap_knownCommands = Utils.getAccessibleField(SimpleCommandMap.class, "commandMap");
+    private static final Field SIMPLE_COMMAND_MAP_knownCommands = Utils.getAccessibleField(SimpleCommandMap.class, "knownCommands");
 
     private final Map<String, GroovyHandler> handlers = new HashMap<>();
     private GroovyScriptEngine shell;
@@ -87,7 +87,7 @@ public class Handlers {
         if (handler.getGroovyObj().getCommands().size() != 0) {
             try {
                 SimpleCommandMap commandMap = (SimpleCommandMap) SIMPLE_PLUGIN_MANAGER_commandMap.get(pm);
-                Map<String, Command> knownCommands = (Map<String, Command>) SimpleCommandMap_knownCommands.get(commandMap);
+                Map<String, Command> knownCommands = (Map<String, Command>) SIMPLE_COMMAND_MAP_knownCommands.get(commandMap);
                 Iterator<Command> iterator = knownCommands.values().iterator();
                 while (iterator.hasNext()) {
                     Command command = iterator.next();
