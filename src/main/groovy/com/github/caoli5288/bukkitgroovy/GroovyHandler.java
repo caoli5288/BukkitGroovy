@@ -14,6 +14,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.PluginBase;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginLogger;
 
 import java.io.File;
@@ -32,7 +33,8 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
 
     private final Map<String, Closure<?>> commands = new HashMap<>();
 
-    private BukkitGroovy parent;
+    private Server server;
+    private GroovyHandledLoader loader;
     private File container;
     private PluginDescriptionFile description;
     private PluginLogger logger;
@@ -41,8 +43,9 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
     private boolean enabled;
     private boolean naggable = true;
 
-    final void init(BukkitGroovy parent, File container, PluginDescriptionFile description) {
-        this.parent = parent;
+    final void init(Server server, GroovyHandledLoader loader, File container, PluginDescriptionFile description) {
+        this.server = server;
+        this.loader = loader;
         this.container = container;
         this.description = description;
         logger = new PluginLogger(this);
@@ -107,12 +110,12 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
         }
     }
 
-    public BukkitGroovy getPluginLoader() {
-        return parent;
+    public PluginLoader getPluginLoader() {
+        return loader;
     }
 
     public Server getServer() {
-        return parent.getServer();
+        return server;
     }
 
     public boolean isEnabled() {
@@ -137,7 +140,7 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
     }
 
     public ChunkGenerator getDefaultWorldGenerator(String world, String id) {
-        return parent.getDefaultWorldGenerator(world, id);
+        return null;
     }
 
     public Logger getLogger() {

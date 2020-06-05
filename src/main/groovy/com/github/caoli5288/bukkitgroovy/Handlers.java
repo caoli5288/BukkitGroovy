@@ -31,7 +31,13 @@ public class Handlers {
     private static final Field SIMPLE_COMMAND_MAP_knownCommands = Utils.getAccessibleField(SimpleCommandMap.class, "knownCommands");
 
     private final Map<String, GroovyHandler> handlers = new HashMap<>();
+    private final GroovyHandledLoader loader;
+
     private GroovyScriptEngine _shell;
+
+    Handlers(GroovyHandledLoader loader) {
+        this.loader = loader;
+    }
 
     public Map<String, GroovyHandler> getHandlers() {
         return handlers;
@@ -143,7 +149,7 @@ public class Handlers {
                 if (handler == null) {
                     handler = new GenericGroovyHandler(obj);
                 }
-                handler.init(groovy, container, new PluginDescriptionFile(container.getName(), obj.getVersion(), "plugin.groovy"));
+                handler.init(groovy.getServer(), loader, container, new PluginDescriptionFile(container.getName(), obj.getVersion(), "plugin.groovy"));
                 handlers.put(handler.getName(), handler);
                 // and then enable it
                 groovy.getServer().getPluginManager().enablePlugin(handler);

@@ -4,28 +4,16 @@ import com.github.caoli5288.bukkitgroovy.util.MavenLibs;
 import com.github.caoli5288.bukkitgroovy.util.Traits;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.event.Event;
-import org.bukkit.event.Listener;
-import org.bukkit.event.server.PluginDisableEvent;
-import org.bukkit.event.server.PluginEnableEvent;
-import org.bukkit.plugin.InvalidDescriptionException;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
-import org.bukkit.plugin.RegisteredListener;
-import org.bukkit.plugin.UnknownDependencyException;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
-import java.util.regex.Pattern;
 
-public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
+public class BukkitGroovy extends JavaPlugin implements Traits {
+
+    private static BukkitGroovy _this;
 
     private Map<String, BiConsumer<CommandSender, String[]>> commands;
     private Listeners listeners;
@@ -33,6 +21,7 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
 
     @Override
     public void onLoad() {
+        _this = this;
         try {
             Class.forName("groovy.lang.GroovyShell");
         } catch (ClassNotFoundException e) {
@@ -44,7 +33,7 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
     @Override
     public void onEnable() {
         listeners = new Listeners();
-        handlers = new Handlers();
+        handlers = new Handlers(new GroovyHandledLoader(getPluginLoader()));
         // commands
         commands = new HashMap<>();
         commands.put("list", this::list);
@@ -114,53 +103,7 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
         handlers.reloads(this);
     }
 
-    @Override
-    public Plugin loadPlugin(File file) throws UnknownDependencyException {
-        return null;// noop
-    }
-
-    @Override
-    public PluginDescriptionFile getPluginDescription(File file) throws InvalidDescriptionException {
-        return null;// noop
-    }
-
-    @Override
-    public Pattern[] getPluginFileFilters() {
-        return null;// noop
-    }
-
-    @Override
-    public Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners(Listener listener, Plugin plugin) {
-        return getPluginLoader().createRegisteredListeners(listener, plugin);
-    }
-
-    public void enablePlugin(Plugin param) {
-        GroovyHandler plugin = (GroovyHandler) param;
-        if (!plugin.isEnabled()) {
-            plugin.getLogger().info("Enabling " + plugin.getDescription().getFullName());
-            try {
-                plugin.setEnabled(true);
-            } catch (Exception e) {
-                plugin.getServer().getLogger().log(Level.SEVERE, "Exception occurred while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", e);
-            }
-            plugin.getServer().getPluginManager().callEvent(new PluginEnableEvent(plugin));
-        }
-    }
-
-    public void disablePlugin(Plugin param) {
-        GroovyHandler plugin = (GroovyHandler) param;
-        if (plugin.isEnabled()) {
-            plugin.getLogger().info("Disabling " + plugin.getDescription().getFullName());
-            plugin.getServer().getPluginManager().callEvent(new PluginDisableEvent(plugin));
-            try {
-                plugin.setEnabled(false);
-            } catch (Exception e) {
-                plugin.getServer().getLogger().log(Level.SEVERE, "Error occurred while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", e);
-            }
-        }
-    }
-
-    public Listeners getListeners() {
-        return listeners;
+    public static Listeners getListeners() {
+        return _this.listeners;
     }
 }

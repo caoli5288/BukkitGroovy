@@ -2,6 +2,7 @@ package com.github.caoli5288.bukkitgroovy.dsl;
 
 import com.github.caoli5288.bukkitgroovy.BukkitGroovy;
 import com.github.caoli5288.bukkitgroovy.GroovyHandler;
+import com.github.caoli5288.bukkitgroovy.Listeners;
 import com.github.caoli5288.bukkitgroovy.handled.HandledPlaceholder;
 import com.github.caoli5288.bukkitgroovy.handled.ICancellable;
 import com.google.common.base.Preconditions;
@@ -26,11 +27,11 @@ public class GenericGroovyHandler extends GroovyHandler {
         }
         groovyObj.getCommands().each((name, params) -> addCommand(name, (Closure<?>) params.get(0)));
         groovyObj.getListeners().each((name, params) -> {
-            BukkitGroovy loader = getPluginLoader();
+            Listeners listeners = BukkitGroovy.getListeners();
             if (params.size() == 1) {
-                loader.getListeners().listen(this, name, EventPriority.NORMAL, (Closure<?>) params.get(0));
+                listeners.listen(this, name, EventPriority.NORMAL, (Closure<?>) params.get(0));
             } else {
-                loader.getListeners().listen(this, name, EventPriority.valueOf(params.get(0).toString()), (Closure<?>) params.get(1));
+                listeners.listen(this, name, EventPriority.valueOf(params.get(0).toString()), (Closure<?>) params.get(1));
             }
         });
         groovyObj.getPlaceholders().each((name, params) -> {
