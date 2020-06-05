@@ -1,10 +1,13 @@
 package com.github.caoli5288.bukkitgroovy.dsl;
 
+import com.github.caoli5288.bukkitgroovy.BukkitGroovy;
 import com.github.caoli5288.bukkitgroovy.GroovyHandler;
 import com.github.caoli5288.bukkitgroovy.handled.HandledPlaceholder;
 import com.github.caoli5288.bukkitgroovy.handled.ICancellable;
+import com.google.common.base.Preconditions;
 import groovy.lang.Closure;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.event.EventPriority;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GenericGroovyHandler extends GroovyHandler {
 
-    private final List<ICancellable> holders = new ArrayList<>();
+    private final List<ICancellable> cancels = new ArrayList<>();
     private final GroovyObj groovyObj;
 
     @Override
@@ -22,8 +25,23 @@ public class GenericGroovyHandler extends GroovyHandler {
             apply(enable);
         }
         groovyObj.getCommands().each((name, params) -> addCommand(name, (Closure<?>) params.get(0)));
-        groovyObj.getListeners().each((eventName, params) -> getPluginLoader().getListeners().listen(this, eventName, ListenerObj.valueOf(params)));
-        groovyObj.getPlaceholders().each((name, params) -> holder(name, (Closure<?>) params.get(0)));
+        groovyObj.getListeners().each((name, params) -> {
+            BukkitGroovy loader = getPluginLoader();
+            if (params.size() == 1) {
+                loader.getListeners().listen(this, name, EventPriority.NORMAL, (Closure<?>) params.get(0));
+            } else {
+                loader.getListeners().listen(this, name, EventPriority.valueOf(params.get(0).toString()), (Closure<?>) params.get(1));
+            }
+        });
+        groovyObj.getPlaceholders().each((name, params) -> {
+            Closure<?> closure = (Closure<?>) params.get(0);
+            closure.setDelegate(this);
+            closure.setResolveStrategy(Closure.DELEGATE_FIRST);
+            HandledPlaceholder obj = new HandledPlaceholder(name, closure);
+            boolean result = obj.register();
+            Preconditions.checkState(result, "cannot register placeholder " + name);
+            cancels.add(obj);
+        });
     }
 
     @Override
@@ -32,21 +50,9 @@ public class GenericGroovyHandler extends GroovyHandler {
         if (closure != null) {
             apply(closure);
         }
-        for (ICancellable cancellable : holders) {
+        for (ICancellable cancellable : cancels) {
             cancellable.cancel();
         }
-        holders.clear();
-    }
-
-    private void holder(String name, Closure<?> closure) {
-        closure.setDelegate(this);
-        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-        HandledPlaceholder placeholder = new HandledPlaceholder(name, closure);
-        boolean result = placeholder.register();
-        if (result) {
-            holders.add(placeholder);
-        } else {
-            getLogger().warning("Cannot register placeholder " + name);
-        }
+        cancels.clear();
     }
 }

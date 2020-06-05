@@ -42,7 +42,7 @@ class GroovyObj {
             contents[name] = params
         }
 
-        def each(BiConsumer<String, List> consumer) { contents.each { k, v -> consumer(k, v as List) } }
+        def each(BiConsumer<String, List<?>> consumer) { contents.each { k, v -> consumer(k, v as List) } }
 
         int size() { contents.size() }
 

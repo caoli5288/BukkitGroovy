@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
 
-    private final Map<String, BiConsumer<CommandSender, String[]>> commands = new HashMap<>();
+    private Map<String, BiConsumer<CommandSender, String[]>> commands;
     private Listeners listeners;
     private Handlers handlers;
 
@@ -44,10 +44,9 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
     @Override
     public void onEnable() {
         listeners = new Listeners();
-        listeners.loadClasses();
         handlers = new Handlers();
-        getLogger().info(String.format("find %s builtin event classes", listeners.getKnownClasses().size()));
-        getServer().getScheduler().runTask(this, () -> handlers.loads(this));
+        // commands
+        commands = new HashMap<>();
         commands.put("list", this::list);
         commands.put("reloads", this::reloads);
         commands.put("loads", this::loads);
@@ -56,6 +55,10 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
         commands.put("load", this::load);
         commands.put("unload", this::unload);
         commands.put("run", this::run);
+        // bootstraps
+        listeners.loadClasses();
+        getLogger().info(String.format("find %s builtin event classes", listeners.getKnownClasses().size()));
+        getServer().getScheduler().runTask(this, () -> handlers.loads(this));
     }
 
     @Override

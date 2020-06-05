@@ -7,6 +7,7 @@ import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.util.DelegatingScript;
 import groovy.util.GroovyScriptEngine;
+import lombok.SneakyThrows;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -17,7 +18,6 @@ import org.bukkit.plugin.SimplePluginManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,7 +29,6 @@ public class Handlers {
 
     private static final Field SIMPLE_PLUGIN_MANAGER_commandMap = Utils.getAccessibleField(SimplePluginManager.class, "commandMap");
     private static final Field SIMPLE_COMMAND_MAP_knownCommands = Utils.getAccessibleField(SimpleCommandMap.class, "knownCommands");
-    private static final Field PLUGIN_DESCRIPTION_FILE_commands = Utils.getAccessibleField(PluginDescriptionFile.class, "commands");
 
     private final Map<String, GroovyHandler> handlers = new HashMap<>();
     private GroovyScriptEngine _shell;
@@ -40,11 +39,7 @@ public class Handlers {
 
     public GroovyScriptEngine getGenericGroovy(BukkitGroovy groovy) {
         if (_shell == null) {
-            try {
-                _shell = createGroovy(groovy.getDataFolder().toString());
-            } catch (IOException e) {
-                groovy.getLogger().log(Level.SEVERE, "Error occurred while create groovy shell", e);
-            }
+            _shell = createGroovy(groovy.getDataFolder().toString());
         }
         return _shell;
     }
@@ -158,7 +153,8 @@ public class Handlers {
         }
     }
 
-    private static GroovyScriptEngine createGroovy(String container) throws IOException {
+    @SneakyThrows
+    private static GroovyScriptEngine createGroovy(String container) {
         CompilerConfiguration config = new CompilerConfiguration();
         config.setScriptBaseClass(DelegatingScript.class.getName());
         return new GroovyScriptEngine(container, new GroovyClassLoader(BukkitGroovy.class.getClassLoader(), config));
