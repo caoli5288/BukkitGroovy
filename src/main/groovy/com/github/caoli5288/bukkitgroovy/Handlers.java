@@ -1,7 +1,9 @@
 package com.github.caoli5288.bukkitgroovy;
 
+import com.github.caoli5288.bukkitgroovy.dsl.GenericGroovyHandler;
 import com.github.caoli5288.bukkitgroovy.dsl.GroovyObj;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
+import com.google.common.io.Files;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.util.DelegatingScript;
@@ -10,6 +12,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.SimplePluginManager;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -17,6 +20,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,23 +33,21 @@ public class Handlers {
     private static final Field SIMPLE_COMMAND_MAP_knownCommands = Utils.getAccessibleField(SimpleCommandMap.class, "knownCommands");
 
     private final Map<String, GroovyHandler> handlers = new HashMap<>();
-    private GroovyScriptEngine shell;
+    private GroovyScriptEngine _shell;
 
     public Map<String, GroovyHandler> getHandlers() {
         return handlers;
     }
 
-    public GroovyScriptEngine getShell(BukkitGroovy groovy) {
-        if (shell == null) {
-            CompilerConfiguration config = new CompilerConfiguration();
-            config.setScriptBaseClass(DelegatingScript.class.getName());
+    public GroovyScriptEngine getGenericGroovy(BukkitGroovy groovy) {
+        if (_shell == null) {
             try {
-                shell = new GroovyScriptEngine(groovy.getDataFolder().toString(), new GroovyClassLoader(BukkitGroovy.class.getClassLoader(), config));
+                _shell = createGroovy(groovy.getDataFolder().toString());
             } catch (IOException e) {
                 groovy.getLogger().log(Level.SEVERE, "Error occurred while create groovy shell", e);
             }
         }
-        return shell;
+        return _shell;
     }
 
     public void loads(BukkitGroovy groovy) {
@@ -84,7 +86,7 @@ public class Handlers {
     private void unload0(BukkitGroovy groovy, GroovyHandler handler) {
         PluginManager pm = groovy.getServer().getPluginManager();
         pm.disablePlugin(handler);
-        if (handler.getGroovyObj().getCommands().size() != 0) {
+        if (!Utils.isNullOrEmpty(handler.getDescription().getCommands())) {
             try {
                 SimpleCommandMap commandMap = (SimpleCommandMap) SIMPLE_PLUGIN_MANAGER_commandMap.get(pm);
                 Map<String, Command> knownCommands = (Map<String, Command>) SIMPLE_COMMAND_MAP_knownCommands.get(commandMap);
@@ -107,7 +109,7 @@ public class Handlers {
     public void run(BukkitGroovy groovy, CommandSender sender, String name, String[] params) {
         File f = new File(groovy.getDataFolder(), name + ".groovy");
         if (f.isFile()) {
-            GroovyScriptEngine shell = getShell(groovy);
+            GroovyScriptEngine shell = getGenericGroovy(groovy);
             try {
                 Binding binding = new Binding(params);
                 binding.setVariable("sender", sender);
@@ -123,30 +125,66 @@ public class Handlers {
     }
 
     public void load(BukkitGroovy groovy, String name) {
-        File container = new File(groovy.getDataFolder(), name);
-        if (container.isDirectory()) {
-            File f = new File(container, "plugin.groovy");
-            if (f.isFile()) {
-                if (handlers.containsKey(name)) {
-                    groovy.getLogger().warning(name + " already exists");
-                } else {
-                    CompilerConfiguration config = new CompilerConfiguration();
-                    config.setScriptBaseClass(DelegatingScript.class.getName());
-                    try {
-                        GroovyScriptEngine shell = new GroovyScriptEngine(container.toString(), new GroovyClassLoader(BukkitGroovy.class.getClassLoader(), config));
-                        DelegatingScript script = (DelegatingScript) shell.createScript("plugin.groovy", new Binding());
-                        GroovyObj obj = new GroovyObj();
-                        script.setDelegate(obj);
-                        script.run();
-                        GroovyHandler handler = new GroovyHandler(groovy, container, obj);
-                        handlers.put(name, handler);// put first
-                        groovy.getServer().getPluginManager().enablePlugin(handler);
-                        obj.getListeners().each((listener, listenerObj) -> groovy.getListeners().listen(handler, listener, listenerObj));
-                    } catch (Exception e) {
-                        groovy.getLogger().log(Level.SEVERE, "Exception occurred while loading " + f, e);
-                    }
-                }
+        if (handlers.containsKey(name)) {
+            groovy.getLogger().warning(name + " already exists");
+        } else {
+            File container = new File(groovy.getDataFolder(), name);
+            if (container.isDirectory()) {
+                load0(groovy, container);
+            } else {
+                groovy.getLogger().warning(container + " not fount");
             }
         }
+    }
+
+    private void load0(BukkitGroovy groovy, File container) {
+        File enter = new File(container, "plugin.groovy");
+        if (enter.isFile()) {
+            try {
+                GroovyScriptEngine shell = createGroovy(container.toString());
+                DelegatingScript script = (DelegatingScript) shell.createScript("plugin.groovy", new Binding());
+                GroovyObj obj = new GroovyObj();
+                script.setDelegate(obj);
+                script.run();
+                GroovyHandler handler = new GenericGroovyHandler(obj);
+                PluginDescriptionFile desc = new PluginDescriptionFile(container.getName(), "1.0", "plugin.groovy");
+                obj.getCommands().inject(desc);
+                handler.init(groovy, container, desc);
+                handlers.put(container.getName(), handler);// put first
+                groovy.getServer().getPluginManager().enablePlugin(handler);
+            } catch (Exception e) {
+                groovy.getLogger().log(Level.SEVERE, "Exception occurred while loading " + enter, e);
+            }
+        } else {
+            loadGro(groovy, container);
+        }
+    }
+
+    private void loadGro(BukkitGroovy groovy, File container) {
+        File enter = new File(container, "plugin.yml");
+        if (enter.isFile()) {
+            try {
+                PluginDescriptionFile desc = new PluginDescriptionFile(Files.newReader(enter, StandardCharsets.UTF_8));
+                enter = new File(container, desc.getMain() + ".groovy");
+                if (enter.isFile()) {
+                    GroovyScriptEngine shell = createGroovy(container.toString());
+                    Class<?> cls = shell.loadScriptByName(enter.toString());
+                    GroovyHandler handler = (GroovyHandler) cls.newInstance();
+                    handler.init(groovy, container, desc);
+                    handlers.put(container.getName(), handler);// put first
+                    groovy.getServer().getPluginManager().enablePlugin(handler);
+                }
+            } catch (Exception e) {
+                groovy.getLogger().log(Level.SEVERE, "Exception occurred while load " + enter, e);
+            }
+        } else {
+            groovy.getLogger().warning(container + " is not a validate container");
+        }
+    }
+
+    private static GroovyScriptEngine createGroovy(String container) throws IOException {
+        CompilerConfiguration config = new CompilerConfiguration();
+        config.setScriptBaseClass(DelegatingScript.class.getName());
+        return new GroovyScriptEngine(container, new GroovyClassLoader(BukkitGroovy.class.getClassLoader(), config));
     }
 }

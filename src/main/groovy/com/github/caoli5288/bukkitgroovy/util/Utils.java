@@ -4,6 +4,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 public class Utils {
 
@@ -27,5 +28,9 @@ public class Utils {
         } catch (Exception e) {
         }
         return null;
+    }
+
+    public static boolean isNullOrEmpty(Map<?, ?> map) {
+        return map == null || map.isEmpty();
     }
 }

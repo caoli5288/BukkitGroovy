@@ -27,18 +27,21 @@ import java.util.regex.Pattern;
 
 public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
 
+    private static BukkitGroovy _this;
+
     private final Map<String, BiConsumer<CommandSender, String[]>> commands = new HashMap<>();
     private Listeners listeners;
     private Handlers handlers;
 
     @Override
     public void onLoad() {
-        saveDefaultConfig();
+        _this = this;
         try {
             Class.forName("groovy.lang.GroovyShell");
         } catch (ClassNotFoundException e) {
             MavenLibs.load("org.codehaus.groovy", "groovy", "3.0.4");
         }
+        saveDefaultConfig();
     }
 
     @Override
@@ -56,6 +59,26 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
         commands.put("load", this::load);
         commands.put("unload", this::unload);
         commands.put("run", this::run);
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] params) {
+        if (params.length == 0) {
+            sender.sendMessage("/groovy list");
+            sender.sendMessage("/groovy reloads");
+            sender.sendMessage("/groovy loads");
+            sender.sendMessage("/groovy unloads");
+            sender.sendMessage("/groovy reload <name>");
+            sender.sendMessage("/groovy load <name>");
+            sender.sendMessage("/groovy unload <name>");
+            sender.sendMessage("/groovy run <name> [param...]");
+        } else {
+            String param = params[0];
+            params = Arrays.copyOfRange(params, 1, params.length);
+            commands.get(param).accept(sender, params);
+            return true;
+        }
+        return false;
     }
 
     private void list(CommandSender sender, String[] params) {
@@ -89,30 +112,6 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
 
     private void reloads(CommandSender sender, String[] params) {
         handlers.reloads(this);
-    }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] params) {
-        if (params.length == 0) {
-            sender.sendMessage("/groovy list");
-            sender.sendMessage("/groovy reloads");
-            sender.sendMessage("/groovy loads");
-            sender.sendMessage("/groovy unloads");
-            sender.sendMessage("/groovy reload <name>");
-            sender.sendMessage("/groovy load <name>");
-            sender.sendMessage("/groovy unload <name>");
-            sender.sendMessage("/groovy run <name> [param...]");
-        } else {
-            String param = params[0];
-            params = Arrays.copyOfRange(params, 1, params.length);
-            commands.get(param).accept(sender, params);
-            return true;
-        }
-        return false;
-    }
-
-    public Listeners getListeners() {
-        return listeners;
     }
 
     @Override
@@ -159,5 +158,13 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
                 plugin.getServer().getLogger().log(Level.SEVERE, "Error occurred while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", e);
             }
         }
+    }
+
+    public static Listeners getListeners() {
+        return _this.listeners;
+    }
+
+    public static BukkitGroovy get() {
+        return _this;
     }
 }

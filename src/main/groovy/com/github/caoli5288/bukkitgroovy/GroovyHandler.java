@@ -1,7 +1,5 @@
 package com.github.caoli5288.bukkitgroovy;
 
-import com.github.caoli5288.bukkitgroovy.dsl.GroovyObj;
-import com.github.caoli5288.bukkitgroovy.util.IDsl;
 import com.github.caoli5288.bukkitgroovy.util.Traits;
 import com.google.common.io.Files;
 import lombok.SneakyThrows;
@@ -10,7 +8,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.Listener;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.PluginBase;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -27,29 +24,22 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class GroovyHandler extends PluginBase implements Listener, IDsl, Traits {
+public abstract class GroovyHandler extends PluginBase implements Traits {
 
-    private final BukkitGroovy parent;
-    private final File container;
-    private final GroovyObj groovyObj;
-    private final PluginDescriptionFile description;
-    private final PluginLogger logger;
+    private BukkitGroovy parent;
+    private File container;
+    private PluginDescriptionFile description;
+    private PluginLogger logger;
 
     private FileConfiguration config;
     private boolean enabled;
-    private boolean sound = true;
+    private boolean naggable = true;
 
-    public GroovyHandler(BukkitGroovy parent, File container, GroovyObj groovyObj) {
+    final void init(BukkitGroovy parent, File container, PluginDescriptionFile description) {
         this.parent = parent;
         this.container = container;
-        this.groovyObj = groovyObj;
-        description = new PluginDescriptionFile(container.getName(), "1.0", "unknown");
-        groovyObj.getCommands().inject(description);
+        this.description = description;
         logger = new PluginLogger(this);
-    }
-
-    public GroovyObj getGroovyObj() {
-        return groovyObj;
     }
 
     public File getDataFolder() {
@@ -120,24 +110,20 @@ public class GroovyHandler extends PluginBase implements Listener, IDsl, Traits 
     }
 
     public void onDisable() {
-        apply(groovyObj.getDisable());
     }
 
     public void onLoad() {
-
     }
 
     public void onEnable() {
-        // delegated functions first
-        apply(groovyObj.getEnable());
     }
 
     public boolean isNaggable() {
-        return sound;
+        return naggable;
     }
 
     public void setNaggable(boolean b) {
-        sound = b;
+        naggable = b;
     }
 
     public ChunkGenerator getDefaultWorldGenerator(String world, String id) {
@@ -149,12 +135,6 @@ public class GroovyHandler extends PluginBase implements Listener, IDsl, Traits 
     }
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] params) {
-        try {
-            groovyObj.getCommands().execute(this, label, sender, params);
-            return true;
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, String.format("Exception occurred while execute command /%s %s", label, String.join(" ", params)));
-        }
         return false;
     }
 

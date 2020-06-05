@@ -1,17 +1,15 @@
 package com.github.caoli5288.bukkitgroovy.util;
 
 import groovy.lang.Closure;
-import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-public interface Traits {
+public interface Traits extends Listener {
 
     default void runCommand(String command) {
-        Server server = Bukkit.getServer();
+        Server server = ((Plugin) this).getServer();
         server.dispatchCommand(server.getConsoleSender(), command);
     }
 
@@ -27,14 +25,9 @@ public interface Traits {
         return new HandledTask(closure).runTaskTimer((Plugin) this, delay, repeat);
     }
 
-    @RequiredArgsConstructor
-    class HandledTask extends BukkitRunnable {
-
-        private final Closure<?> closure;
-
-        @Override
-        public void run() {
-            closure.call(this);
-        }
+    default void apply(Closure<?> closure) {
+        closure.setDelegate(this);
+        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
+        closure.call();
     }
 }
