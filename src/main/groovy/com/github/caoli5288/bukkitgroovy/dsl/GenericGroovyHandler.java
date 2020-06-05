@@ -2,18 +2,22 @@ package com.github.caoli5288.bukkitgroovy.dsl;
 
 import com.github.caoli5288.bukkitgroovy.BukkitGroovy;
 import com.github.caoli5288.bukkitgroovy.GroovyHandler;
+import com.github.caoli5288.bukkitgroovy.handled.HandledPlaceholder;
+import com.github.caoli5288.bukkitgroovy.handled.ICancellable;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
 import groovy.lang.Closure;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
 @RequiredArgsConstructor
 public class GenericGroovyHandler extends GroovyHandler {
 
+    private final List<ICancellable> cancels = new ArrayList<>();
     private final GroovyObj groovyObj;
 
     @Override
@@ -23,6 +27,14 @@ public class GenericGroovyHandler extends GroovyHandler {
             apply(closure);
         }
         groovyObj.getListeners().each((eventName, obj) -> BukkitGroovy.getListeners().listen(this, eventName, ListenerObj.valueOf(obj)));
+        groovyObj.getPlaceholders().each((id, params) -> {
+            HandledPlaceholder placeholder = new HandledPlaceholder(id, (Closure<?>) params.get(0));
+            if (placeholder.register()) {
+                cancels.add(placeholder);
+            } else {
+                getLogger().warning("Cannot register placeholder " + id);
+            }
+        });
     }
 
     @Override
@@ -31,6 +43,10 @@ public class GenericGroovyHandler extends GroovyHandler {
         if (closure != null) {
             apply(closure);
         }
+        for (ICancellable cancellable : cancels) {
+            cancellable.cancel();
+        }
+        cancels.clear();
     }
 
     @Override

@@ -133,8 +133,6 @@ public class Handlers {
             File container = new File(groovy.getDataFolder(), name);
             if (container.isDirectory()) {
                 load0(groovy, container);
-            } else {
-                groovy.getLogger().warning(container + " not fount");
             }
         }
     }

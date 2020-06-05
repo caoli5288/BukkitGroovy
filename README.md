@@ -42,6 +42,12 @@ listeners {
     }
 }
 
+placeholders {
+    hello { p, params ->
+        "$params ${p.name}"
+    }
+}
+
 enable {
     logger.info "hello, world"
     config.set("") // reads config.yml in plugins/BukkitGroovy/<name>/
@@ -67,3 +73,7 @@ Create single file like `plugin/BukkitGroovy/<name>.groovy` and execute `/groovy
 // sample.groovy
 sender.sendMessage args.toString()
 ```
+
+## Snapshot releases
+
+[![](https://jitpack.io/v/caoli5288/bukkitgroovy.svg)](https://jitpack.io/com/github/caoli5288/bukkitgroovy/master-SNAPSHOT/bukkitgroovy-master-SNAPSHOT.jar)

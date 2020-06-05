@@ -5,3 +5,5 @@ version: 1.0-SNAPSHOT
 commands:
   groovy:
     permission: groovy.admin
+
+softdepend: [PlaceholderAPI]

@@ -9,6 +9,7 @@ class GroovyObj {
     Closure disable
     Contexts commands = new Contexts()
     Contexts listeners = new Contexts()
+    Contexts placeholders = new Contexts()
 
     def enable(Closure closure) {
         enable = closure
@@ -24,6 +25,10 @@ class GroovyObj {
 
     def listeners(Closure closure) {
         listeners.with closure
+    }
+
+    def placeholders(Closure closure) {
+        placeholders.with closure
     }
 
     class Contexts {
