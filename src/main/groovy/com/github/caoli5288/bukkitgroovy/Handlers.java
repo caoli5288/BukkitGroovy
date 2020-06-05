@@ -3,7 +3,6 @@ package com.github.caoli5288.bukkitgroovy;
 import com.github.caoli5288.bukkitgroovy.dsl.GenericGroovyHandler;
 import com.github.caoli5288.bukkitgroovy.dsl.GroovyObj;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
-import com.google.common.io.Files;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.util.DelegatingScript;
@@ -20,7 +19,6 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -145,37 +143,18 @@ public class Handlers {
                 GroovyObj obj = new GroovyObj();
                 script.setDelegate(obj);
                 script.run();
-                GroovyHandler handler = new GenericGroovyHandler(obj);
-                handler.init(groovy, container, new PluginDescriptionFile(container.getName(), "1.0", "plugin.groovy"));
-                handlers.put(container.getName(), handler);// put first
+                // load handler
+                GroovyHandler handler = obj.getHandler();
+                if (handler == null) {
+                    handler = new GenericGroovyHandler(obj);
+                }
+                handler.init(groovy, container, new PluginDescriptionFile(container.getName(), obj.getVersion(), "plugin.groovy"));
+                handlers.put(handler.getName(), handler);
+                // and then enable it
                 groovy.getServer().getPluginManager().enablePlugin(handler);
             } catch (Exception e) {
                 groovy.getLogger().log(Level.SEVERE, "Exception occurred while loading " + enter, e);
             }
-        } else {
-            loadGro(groovy, container);
-        }
-    }
-
-    private void loadGro(BukkitGroovy groovy, File container) {
-        File enter = new File(container, "plugin.groovy");
-        if (enter.isFile()) {
-            try {
-                PluginDescriptionFile desc = new PluginDescriptionFile(Files.newReader(enter, StandardCharsets.UTF_8));
-                enter = new File(container, desc.getMain() + ".groovy");
-                if (enter.isFile()) {
-                    GroovyScriptEngine shell = createGroovy(container.toString());
-                    Class<?> cls = shell.loadScriptByName(enter.toString());
-                    GroovyHandler handler = (GroovyHandler) cls.newInstance();
-                    handler.init(groovy, container, desc);
-                    handlers.put(container.getName(), handler);// put first
-                    groovy.getServer().getPluginManager().enablePlugin(handler);
-                }
-            } catch (Exception e) {
-                groovy.getLogger().log(Level.SEVERE, "Exception occurred while load " + enter, e);
-            }
-        } else {
-            groovy.getLogger().warning(container + " is not a validate container");
         }
     }
 

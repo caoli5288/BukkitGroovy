@@ -12,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GenericGroovyHandler extends GroovyHandler {
 
-    private final List<ICancellable> cancels = new ArrayList<>();
+    private final List<ICancellable> holders = new ArrayList<>();
     private final GroovyObj groovyObj;
 
     @Override
@@ -23,17 +23,7 @@ public class GenericGroovyHandler extends GroovyHandler {
         }
         groovyObj.getCommands().each((name, params) -> addCommand(name, (Closure<?>) params.get(0)));
         groovyObj.getListeners().each((eventName, params) -> getPluginLoader().getListeners().listen(this, eventName, ListenerObj.valueOf(params)));
-        groovyObj.getPlaceholders().each((id, params) -> {
-            Closure<?> closure = (Closure<?>) params.get(0);
-            closure.setDelegate(this);
-            closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-            HandledPlaceholder placeholder = new HandledPlaceholder(id, closure);
-            if (placeholder.register()) {
-                cancels.add(placeholder);
-            } else {
-                getLogger().warning("Cannot register placeholder " + id);
-            }
-        });
+        groovyObj.getPlaceholders().each((name, params) -> holder(name, (Closure<?>) params.get(0)));
     }
 
     @Override
@@ -42,9 +32,21 @@ public class GenericGroovyHandler extends GroovyHandler {
         if (closure != null) {
             apply(closure);
         }
-        for (ICancellable cancellable : cancels) {
+        for (ICancellable cancellable : holders) {
             cancellable.cancel();
         }
-        cancels.clear();
+        holders.clear();
+    }
+
+    private void holder(String name, Closure<?> closure) {
+        closure.setDelegate(this);
+        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
+        HandledPlaceholder placeholder = new HandledPlaceholder(name, closure);
+        boolean result = placeholder.register();
+        if (result) {
+            holders.add(placeholder);
+        } else {
+            getLogger().warning("Cannot register placeholder " + name);
+        }
     }
 }

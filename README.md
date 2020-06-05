@@ -4,9 +4,11 @@
 
 ## Groovy dsl style plugins
 
-Create a folder `plugins/BukkitGroovy/<name>` and put `plugin.groovy` into it. Here is an `plugin.groovy` example.
+Create a folder called `plugins/BukkitGroovy/<name>`. The folder contains file named `plugin.groovy`. Here's an example.
 
 ```groovy
+// plugin.groovy
+
 commands {
     hello {
         it.sendMessage "hello!"
@@ -63,14 +65,44 @@ enable {
 disable {
     server.shutdown()
 }
+
+version = "x.y.z"
 ```
 
 ## Groovy scripts
 
-Create single file like `plugin/BukkitGroovy/<name>.groovy` and execute `/groovy run <name>`. Here is an example.
+Create a custom `GroovyHandler`. Here's an example.
+
+```groovy
+// Foo.groovy
+
+import com.github.caoli5288.bukkitgroovy.GroovyHandler
+
+class Foo extends GroovyHandler {
+
+    void onEnable() {
+        addCommand("hello", { sender, args -> it.sendMessage "hello!" })
+        // just like common java plugins but use groovy-lang
+    }
+
+    
+}
+```
+
+Create `plugin.groovy` includes line.
+
+```groovy
+// plugin.groovy
+handler = new Foo()
+```
+
+## Groovy oneshot scripts
+
+Create file like `plugin/BukkitGroovy/<name>.groovy` and execute `/groovy run <name>`. Here is an example.
 
 ```groovy
 // sample.groovy
+
 sender.sendMessage args.toString()
 ```
 

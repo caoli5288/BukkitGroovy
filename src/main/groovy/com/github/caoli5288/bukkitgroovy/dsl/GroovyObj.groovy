@@ -1,15 +1,18 @@
 package com.github.caoli5288.bukkitgroovy.dsl
 
+import com.github.caoli5288.bukkitgroovy.GroovyHandler
 
 import java.util.function.BiConsumer
 
 class GroovyObj {
 
+    String version = "1.0"
     Closure enable
     Closure disable
     Contexts commands = new Contexts()
     Contexts listeners = new Contexts()
     Contexts placeholders = new Contexts()
+    GroovyHandler handler
 
     def enable(Closure closure) {
         enable = closure
