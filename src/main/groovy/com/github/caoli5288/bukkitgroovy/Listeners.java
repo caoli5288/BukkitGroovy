@@ -1,6 +1,6 @@
 package com.github.caoli5288.bukkitgroovy;
 
-import com.github.caoli5288.bukkitgroovy.dsl.GroovyObj;
+import com.github.caoli5288.bukkitgroovy.dsl.ListenerObj;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
 import com.google.common.base.Preconditions;
 import groovy.lang.Closure;
@@ -29,7 +29,7 @@ public class Listeners {
     private final Map<String, HandlerList> knownClasses = new HashMap<>();
     private final Set<String> loads = new HashSet<>();
 
-    public void listen(GroovyHandler handler, String name, GroovyObj.ListenerObj obj) {
+    public void listen(GroovyHandler handler, String name, ListenerObj obj) {
         loadClasses(name);
         if (knownClasses.containsKey(name)) {
             listen(handler, knownClasses.get(name), obj);
@@ -38,7 +38,7 @@ public class Listeners {
         }
     }
 
-    private void listen(GroovyHandler handler, HandlerList handlers, GroovyObj.ListenerObj obj) {
+    private void listen(GroovyHandler handler, HandlerList handlers, ListenerObj obj) {
         Closure<?> closure = obj.getClosure();
         closure.setDelegate(handler);
         closure.setResolveStrategy(Closure.DELEGATE_FIRST);

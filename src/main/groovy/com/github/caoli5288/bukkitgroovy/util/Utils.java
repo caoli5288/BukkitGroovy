@@ -1,14 +1,11 @@
 package com.github.caoli5288.bukkitgroovy.util;
 
-import org.bukkit.plugin.PluginDescriptionFile;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Map;
 
 public class Utils {
-
-    public static final Field PLUGIN_DESCRIPTION_FILE_commands = getAccessibleField(PluginDescriptionFile.class, "commands");
 
     public static Field getAccessibleField(Class<?> cls, String name) {
         try {
@@ -32,5 +29,9 @@ public class Utils {
 
     public static boolean isNullOrEmpty(Map<?, ?> map) {
         return map == null || map.isEmpty();
+    }
+
+    public static boolean isNullOrEmpty(Collection<?> collection) {
+        return collection == null || collection.isEmpty();
     }
 }

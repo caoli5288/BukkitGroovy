@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class Handlers {
 
     private static final Field SIMPLE_PLUGIN_MANAGER_commandMap = Utils.getAccessibleField(SimplePluginManager.class, "commandMap");
     private static final Field SIMPLE_COMMAND_MAP_knownCommands = Utils.getAccessibleField(SimpleCommandMap.class, "knownCommands");
+    private static final Field PLUGIN_DESCRIPTION_FILE_commands = Utils.getAccessibleField(PluginDescriptionFile.class, "commands");
 
     private final Map<String, GroovyHandler> handlers = new HashMap<>();
     private GroovyScriptEngine _shell;
@@ -148,7 +150,9 @@ public class Handlers {
                 script.run();
                 GroovyHandler handler = new GenericGroovyHandler(obj);
                 PluginDescriptionFile desc = new PluginDescriptionFile(container.getName(), "1.0", "plugin.groovy");
-                obj.getCommands().inject(desc);
+                Map<String, Map<String, ?>> commands = new HashMap<>();
+                obj.getCommands().each((k, v) -> commands.put(k, Collections.emptyMap()));
+                PLUGIN_DESCRIPTION_FILE_commands.set(desc, commands);
                 handler.init(groovy, container, desc);
                 handlers.put(container.getName(), handler);// put first
                 groovy.getServer().getPluginManager().enablePlugin(handler);
