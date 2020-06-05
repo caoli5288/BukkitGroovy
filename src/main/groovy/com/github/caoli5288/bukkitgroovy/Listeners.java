@@ -1,12 +1,18 @@
 package com.github.caoli5288.bukkitgroovy;
 
 import com.github.caoli5288.bukkitgroovy.util.Utils;
+import com.google.common.base.Preconditions;
 import groovy.lang.Closure;
+import lombok.Data;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
 
@@ -22,38 +28,39 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
-public class Listeners {
+public class Listeners implements Listener {
 
     private static final Pattern CLASS_NAMES = Pattern.compile("(.*)\\.class");
 
-    private final Map<String, HandlerList> knownClasses = new HashMap<>();
+    private final Map<String, Classes> knownClasses = new HashMap<>();
 
     public void listen(GroovyHandler handler, String name, EventPriority priority, Closure<?> closure) {
-        HandlerList handlers = Objects.requireNonNull(getHandlers(name), "event " + name + " not found");
+        Classes classes = getClasses(name);
+        Objects.requireNonNull(classes, "Cannot found event " + name);
         closure.setDelegate(handler);
         closure.setResolveStrategy(Closure.DELEGATE_FIRST);
-        handlers.register(new RegisteredListener(handler, (__, e) -> closure.call(e), priority, handler, false));
+        classes.getHandlers().register(new RegisteredListener(handler, (__, e) -> closure.call(e), priority, handler, false));
     }
 
-    void loadClasses() {
+    private void loadClasses() {
         loadClasses(null, Bukkit.class, s -> s.startsWith("org/bukkit/event"));
     }
 
-    public HandlerList getHandlers(String name) {
+    public Classes getClasses(String name) {
         if (!knownClasses.containsKey(name)) {
             int split = name.indexOf('_');
             if (split != -1) {
-                Plugin p = Bukkit.getPluginManager().getPlugin(name.substring(0, split));
-                if (p != null) {
-                    loadClasses(p.getName(), p.getClass(), s -> true);
-                }
+                String splitName = name.substring(0, split);
+                Plugin plugin = Bukkit.getPluginManager().getPlugin(splitName);
+                Preconditions.checkState(Utils.isEnabled(plugin), "Cannot found plugin " + splitName);
+                loadClasses(plugin.getName(), plugin.getClass(), s -> true);
             }
         }
         return knownClasses.get(name);
     }
 
     @SneakyThrows
-    private void loadClasses(String ns, Class<?> enter, Predicate<String> filter) {
+    public void loadClasses(String ns, Class<?> enter, Predicate<String> filter) {
         ClassLoader cl = enter.getClassLoader();
         JarFile jar = new JarFile(enter.getProtectionDomain().getCodeSource().getLocation().getFile());
         Enumeration<JarEntry> entries = jar.entries();
@@ -76,10 +83,13 @@ public class Listeners {
     private void load0(String ns, Class<?> cls) {
         HandlerList handlers = lookupHandlers(cls);
         if (handlers != null) {
+            Classes classes = new Classes(cls, handlers);
             if (ns == null) {
-                knownClasses.put(cls.getSimpleName(), handlers);
+                knownClasses.put(cls.getSimpleName(), classes);
+                knownClasses.put(cls.getSimpleName().toLowerCase(), classes);
             } else {
-                knownClasses.put(ns + "_" + cls.getSimpleName(), handlers);
+                knownClasses.put(ns + "_" + cls.getSimpleName(), classes);
+                knownClasses.put(ns + "_" + cls.getSimpleName().toLowerCase(), classes);
             }
         }
     }
@@ -98,7 +108,34 @@ public class Listeners {
         return (HandlerList) method.invoke(cls);
     }
 
-    public Map<String, HandlerList> getKnownClasses() {
+    public Map<String, Classes> getKnownClasses() {
         return knownClasses;
+    }
+
+    void config(BukkitGroovy groovy) {
+        loadClasses();
+        groovy.getServer().getPluginManager().registerEvents(this, groovy);
+    }
+
+    @EventHandler
+    public void on(PluginDisableEvent event) {
+        clearClasses(event.getPlugin().getClass().getClassLoader());
+    }
+
+    @EventHandler
+    public void on(PluginEnableEvent event) {
+        Plugin plugin = event.getPlugin();
+        loadClasses(plugin.getName(), plugin.getClass(), s -> true);
+    }
+
+    private void clearClasses(ClassLoader cl) {
+        knownClasses.values().removeIf(classes -> classes.cls.getClassLoader() == cl);
+    }
+
+    @Data
+    public static class Classes {
+
+        private final Class<?> cls;
+        private final HandlerList handlers;
     }
 }

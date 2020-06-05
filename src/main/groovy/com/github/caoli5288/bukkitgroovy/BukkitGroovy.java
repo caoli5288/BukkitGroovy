@@ -56,8 +56,8 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
         commands.put("unload", this::unload);
         commands.put("run", this::run);
         // bootstraps
-        listeners.loadClasses();
-        getLogger().info(String.format("find %s builtin event classes", listeners.getKnownClasses().size()));
+        listeners.config(this);
+        getLogger().info(String.format("find %s builtin event classes", listeners.getKnownClasses().size() / 2));
         getServer().getScheduler().runTask(this, () -> handlers.loads(this));
     }
 

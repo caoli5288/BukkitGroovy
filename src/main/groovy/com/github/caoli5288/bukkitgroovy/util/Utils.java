@@ -58,4 +58,8 @@ public class Utils {
     public static boolean isNullOrEmpty(Collection<?> collection) {
         return collection == null || collection.isEmpty();
     }
+
+    public static boolean isEnabled(Plugin plugin) {
+        return plugin != null && plugin.isEnabled();
+    }
 }
