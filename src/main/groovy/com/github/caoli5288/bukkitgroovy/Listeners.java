@@ -12,7 +12,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
-import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
 
@@ -120,12 +119,6 @@ public class Listeners implements Listener {
     @EventHandler
     public void on(PluginDisableEvent event) {
         clearClasses(event.getPlugin().getClass().getClassLoader());
-    }
-
-    @EventHandler
-    public void on(PluginEnableEvent event) {
-        Plugin plugin = event.getPlugin();
-        loadClasses(plugin.getName(), plugin.getClass(), s -> true);
     }
 
     private void clearClasses(ClassLoader cl) {
