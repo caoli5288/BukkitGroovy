@@ -15,7 +15,12 @@ public class HandledPlaceholder extends PlaceholderHook implements ICancellable 
 
     @Override
     public String onPlaceholderRequest(Player p, String params) {
-        return String.valueOf(closure.call(p, params));
+        int parameters = closure.getMaximumNumberOfParameters();
+        if (parameters >= 2) {
+            return String.valueOf(closure.call(p, params));
+        } else {
+        }
+        return String.valueOf(closure.call(p));
     }
 
     @Override

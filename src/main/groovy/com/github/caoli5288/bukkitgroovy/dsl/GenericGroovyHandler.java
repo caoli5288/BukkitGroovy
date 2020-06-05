@@ -54,9 +54,15 @@ public class GenericGroovyHandler extends GroovyHandler {
         try {
             List<?> ctx = groovyObj.getCommands().get(label);
             if (!Utils.isNullOrEmpty(ctx)) {
-                ((Closure<?>) ctx.get(0)).call(sender, params);
+                Closure<?> closure = (Closure<?>) ctx.get(0);
+                int parameters = closure.getMaximumNumberOfParameters();
+                if (parameters >= 2) {
+                    closure.call(sender, params);
+                } else {
+                    closure.call(sender);
+                }
+                return true;
             }
-            return true;
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, String.format("Exception occurred while execute command /%s %s", label, String.join(" ", params)), e);
         }

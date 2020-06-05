@@ -8,12 +8,12 @@ Create a folder `plugins/BukkitGroovy/<name>` and put `plugin.groovy` into it. H
 
 ```groovy
 commands {
-    hello { sender, args ->
-        sender.sendMessage "hello!"
+    hello {
+        it.sendMessage "hello!"
     }
 
-    greeting { sender, args ->
-        sender.sendMessage "greeting!"
+    me { sender, args ->
+        runCommand "${sender.name} say ${args.join(" ")}"
     }
 }
 
@@ -44,7 +44,7 @@ listeners {
 
 placeholders {
     hello { p, params ->
-        "$params ${p.name}"
+        "$params by ${p.name}"
     }
 }
 
