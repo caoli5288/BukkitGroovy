@@ -1,17 +1,19 @@
 package com.github.caoli5288.bukkitgroovy;
 
 import com.github.caoli5288.bukkitgroovy.util.Traits;
+import com.github.caoli5288.bukkitgroovy.util.Utils;
 import com.google.common.io.Files;
+import groovy.lang.Closure;
 import lombok.SneakyThrows;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.PluginBase;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginLogger;
 
 import java.io.File;
@@ -20,18 +22,22 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class GroovyHandler extends PluginBase implements Traits {
 
+    private final Map<String, Closure<?>> commands = new HashMap<>();
+
     private BukkitGroovy parent;
     private File container;
     private PluginDescriptionFile description;
     private PluginLogger logger;
-
     private FileConfiguration config;
+
     private boolean enabled;
     private boolean naggable = true;
 
@@ -40,6 +46,10 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
         this.container = container;
         this.description = description;
         logger = new PluginLogger(this);
+    }
+
+    int getCommands() {
+        return commands.size();
     }
 
     public File getDataFolder() {
@@ -97,7 +107,7 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
         }
     }
 
-    public PluginLoader getPluginLoader() {
+    public BukkitGroovy getPluginLoader() {
         return parent;
     }
 
@@ -134,7 +144,31 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
         return logger;
     }
 
+    public void addCommand(String name, Closure<?> closure) {
+        closure.setDelegate(this);
+        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
+        if (!commands.containsKey(name)) {
+            PluginCommand command = Utils.newCommand(name, this);
+            Handlers.registerCommand(this, command);
+        }
+        commands.put(name, closure);
+    }
+
     public boolean onCommand(CommandSender sender, Command command, String label, String[] params) {
+        Closure<?> closure = commands.get(command.getName());
+        if (closure != null) {
+            int parameters = closure.getMaximumNumberOfParameters();
+            try {
+                if (parameters >= 2) {
+                    closure.call(sender, params);
+                } else {
+                    closure.call(sender);
+                }
+                return true;
+            } catch (Exception e) {
+                getLogger().log(Level.SEVERE, String.format("Exception occurred while execute command /%s %s", label, String.join(" ", params)), e);
+            }
+        }
         return false;
     }
 

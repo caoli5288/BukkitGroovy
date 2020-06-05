@@ -11,38 +11,35 @@ public class HandledPlaceholder extends PlaceholderHook implements ICancellable 
 
     private final String id;
     private final Closure<?> closure;
-    private boolean registered;
+    private boolean cancelled = true;
 
     @Override
     public String onPlaceholderRequest(Player p, String params) {
         int parameters = closure.getMaximumNumberOfParameters();
         if (parameters >= 2) {
             return String.valueOf(closure.call(p, params));
-        } else {
         }
         return String.valueOf(closure.call(p));
     }
 
     @Override
     public void cancel() {
-        if (registered) {
-            registered = false;
+        if (!cancelled) {
+            cancelled = true;
             PlaceholderAPI.unregisterPlaceholderHook(id);
         }
     }
 
     public boolean register() {
-        if (isCancelled()) {
-            boolean result = PlaceholderAPI.registerPlaceholderHook(id, this);
-            if (result) {
-                return (registered = true);
-            }
+        if (cancelled && PlaceholderAPI.registerPlaceholderHook(id, this)) {
+            cancelled = false;
+            return true;
         }
         return false;
     }
 
     @Override
     public boolean isCancelled() {
-        return !registered;
+        return cancelled;
     }
 }

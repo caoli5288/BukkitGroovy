@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -88,7 +87,7 @@ public class Handlers {
     private void unload0(BukkitGroovy groovy, GroovyHandler handler) {
         PluginManager pm = groovy.getServer().getPluginManager();
         pm.disablePlugin(handler);
-        if (!Utils.isNullOrEmpty(handler.getDescription().getCommands())) {
+        if (handler.getCommands() != 0) {
             try {
                 SimpleCommandMap commandMap = (SimpleCommandMap) SIMPLE_PLUGIN_MANAGER_commandMap.get(pm);
                 Map<String, Command> knownCommands = (Map<String, Command>) SIMPLE_COMMAND_MAP_knownCommands.get(commandMap);
@@ -147,11 +146,7 @@ public class Handlers {
                 script.setDelegate(obj);
                 script.run();
                 GroovyHandler handler = new GenericGroovyHandler(obj);
-                PluginDescriptionFile desc = new PluginDescriptionFile(container.getName(), "1.0", "plugin.groovy");
-                Map<String, Map<String, ?>> commands = new HashMap<>();
-                obj.getCommands().each((k, v) -> commands.put(k, Collections.emptyMap()));
-                PLUGIN_DESCRIPTION_FILE_commands.set(desc, commands);
-                handler.init(groovy, container, desc);
+                handler.init(groovy, container, new PluginDescriptionFile(container.getName(), "1.0", "plugin.groovy"));
                 handlers.put(container.getName(), handler);// put first
                 groovy.getServer().getPluginManager().enablePlugin(handler);
             } catch (Exception e) {
@@ -163,7 +158,7 @@ public class Handlers {
     }
 
     private void loadGro(BukkitGroovy groovy, File container) {
-        File enter = new File(container, "plugin.yml");
+        File enter = new File(container, "plugin.groovy");
         if (enter.isFile()) {
             try {
                 PluginDescriptionFile desc = new PluginDescriptionFile(Files.newReader(enter, StandardCharsets.UTF_8));
@@ -188,5 +183,13 @@ public class Handlers {
         CompilerConfiguration config = new CompilerConfiguration();
         config.setScriptBaseClass(DelegatingScript.class.getName());
         return new GroovyScriptEngine(container, new GroovyClassLoader(BukkitGroovy.class.getClassLoader(), config));
+    }
+
+    public static void registerCommand(GroovyHandler handler, Command command) {
+        try {
+            SimpleCommandMap commandMap = (SimpleCommandMap) SIMPLE_PLUGIN_MANAGER_commandMap.get(handler.getServer().getPluginManager());
+            commandMap.register(handler.getName(), command);
+        } catch (Exception e) {
+        }
     }
 }

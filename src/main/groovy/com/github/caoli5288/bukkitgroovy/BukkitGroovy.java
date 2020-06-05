@@ -27,15 +27,12 @@ import java.util.regex.Pattern;
 
 public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
 
-    private static BukkitGroovy _this;
-
     private final Map<String, BiConsumer<CommandSender, String[]>> commands = new HashMap<>();
     private Listeners listeners;
     private Handlers handlers;
 
     @Override
     public void onLoad() {
-        _this = this;
         try {
             Class.forName("groovy.lang.GroovyShell");
         } catch (ClassNotFoundException e) {
@@ -160,11 +157,7 @@ public class BukkitGroovy extends JavaPlugin implements PluginLoader, Traits {
         }
     }
 
-    public static Listeners getListeners() {
-        return _this.listeners;
-    }
-
-    public static BukkitGroovy get() {
-        return _this;
+    public Listeners getListeners() {
+        return listeners;
     }
 }
