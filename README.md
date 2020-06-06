@@ -32,15 +32,18 @@ listeners {
             }
         }
     }
-
-    // event with priority
-    PlayerDeathEvent "HIGH", {
-        it.player.sendMessage "you death!"
-    }
-    
     // third-party event
     BedwarsRel_BedwarsGameOverEvent {
         server.shutdown()
+    }
+}
+// events with priority
+listeners "HIGHEST", {
+    EntityDamageByEntityEvent {
+        it.cancelled = true
+    }
+    EntityDamageByBlockEvent {
+        it.cancelled = true
     }
 }
 

@@ -1,17 +1,20 @@
 package com.github.caoli5288.bukkitgroovy.dsl
 
 import com.github.caoli5288.bukkitgroovy.GroovyHandler
+import groovy.transform.CompileStatic
+import org.bukkit.event.EventPriority
 
 import java.util.function.BiConsumer
 
+@CompileStatic
 class GroovyObj {
 
     String version = "1.0"
     Closure enable
     Closure disable
     Contexts commands = new Contexts()
-    Contexts listeners = new Contexts()
     Contexts placeholders = new Contexts()
+    List<ListenerObj> listeners = []
     GroovyHandler handler
 
     def enable(Closure closure) {
@@ -26,8 +29,21 @@ class GroovyObj {
         commands.with closure
     }
 
+    def listeners(String priority, Closure closure) {
+        def order = EventPriority.valueOf(priority)
+        def context = new Contexts()
+        context.with closure
+        context.visit() { k, v ->
+            listeners << new ListenerObj(priority: order, name: k, closure: v[0] as Closure)
+        }
+    }
+
     def listeners(Closure closure) {
-        listeners.with closure
+        def context = new Contexts()
+        context.with closure
+        context.visit { k, v ->
+            listeners << new ListenerObj(priority: EventPriority.NORMAL, name: k, closure: v[0] as Closure)
+        }
     }
 
     def placeholders(Closure closure) {
@@ -36,18 +52,12 @@ class GroovyObj {
 
     class Contexts {
 
-        def contents = [:]
+        Map<String, List<?>> contents = [:]
 
         def invokeMethod(String name, def params) {
-            contents[name] = params
+            contents[name] = params as List
         }
 
-        def each(BiConsumer<String, List<?>> consumer) { contents.each { k, v -> consumer(k, v as List) } }
-
-        int size() { contents.size() }
-
-        List get(String name) { contents[name] as List }
-
-        boolean contains(String name) { contents.containsKey(name) }
+        def visit(BiConsumer<String, List<?>> consumer) { contents.each { k, v -> consumer(k, v) } }
     }
 }

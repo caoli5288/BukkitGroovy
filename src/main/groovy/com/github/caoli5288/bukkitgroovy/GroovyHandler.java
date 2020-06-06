@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class GroovyHandler extends PluginBase implements Listener, Traits {
+public abstract class GroovyHandler extends PluginBase implements Listener, Traits {
 
     private final Map<String, Closure<?>> commands = new HashMap<>();
 
