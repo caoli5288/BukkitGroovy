@@ -1,5 +1,6 @@
 package com.github.caoli5288.bukkitgroovy;
 
+import com.github.caoli5288.bukkitgroovy.util.Placeholders;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
@@ -67,6 +68,8 @@ public class GroovyHandledLoader implements PluginLoader {
             } catch (Exception e) {
                 handler.getServer().getLogger().log(Level.SEVERE, "Error occurred while disabling " + handler.getDescription().getFullName() + " (Is it up to date?)", e);
             }
+            handler.getCommands().clear();
+            Placeholders.unregister(handler);
         }
     }
 }

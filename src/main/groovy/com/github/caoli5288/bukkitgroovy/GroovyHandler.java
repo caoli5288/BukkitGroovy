@@ -1,6 +1,6 @@
 package com.github.caoli5288.bukkitgroovy;
 
-import com.github.caoli5288.bukkitgroovy.handled.HandledTask;
+import com.github.caoli5288.bukkitgroovy.util.Schedulers;
 import com.github.caoli5288.bukkitgroovy.util.Traits;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
 import com.google.common.io.Files;
@@ -23,7 +23,6 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -53,8 +52,8 @@ public class GroovyHandler extends PluginBase implements Listener, Traits {
         logger = new PluginLogger(this);
     }
 
-    int getCommands() {
-        return commands.size();
+    Map<String, Closure<?>> getCommands() {
+        return commands;
     }
 
     public File getDataFolder() {
@@ -72,14 +71,11 @@ public class GroovyHandler extends PluginBase implements Listener, Traits {
         return config;
     }
 
+    @SneakyThrows
     public InputStream getResource(String name) {
         File f = new File(container, name);
         if (f.isFile()) {
-            try {
-                return new FileInputStream(f);
-            } catch (FileNotFoundException e) {
-                logger.log(Level.SEVERE, "Exception occurred while get resource " + name, e);
-            }
+            return new FileInputStream(f);
         }
         return null;
     }
@@ -150,8 +146,6 @@ public class GroovyHandler extends PluginBase implements Listener, Traits {
     }
 
     public void addCommand(String name, Closure<?> closure) {
-        closure.setDelegate(this);
-        closure.setResolveStrategy(Closure.DELEGATE_FIRST);
         if (!commands.containsKey(name)) {
             PluginCommand command = Utils.newCommand(name, this);
             Handlers.registerCommand(this, command);
@@ -193,14 +187,14 @@ public class GroovyHandler extends PluginBase implements Listener, Traits {
     }
 
     public BukkitTask task(Closure<?> closure) {
-        return new HandledTask(closure).runTask(this);
+        return Schedulers.run(this, closure);
     }
 
     public BukkitTask task(int delay, Closure<?> closure) {
-        return new HandledTask(closure).runTaskLater(this, delay);
+        return Schedulers.runLater(this, delay, closure);
     }
 
     public BukkitTask task(int delay, int repeat, Closure<?> closure) {
-        return new HandledTask(closure).runTaskTimer(this, delay, repeat);
+        return Schedulers.runTimer(this, delay, repeat, closure);
     }
 }

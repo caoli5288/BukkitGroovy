@@ -86,7 +86,7 @@ public class Handlers {
     private void unload0(BukkitGroovy groovy, GroovyHandler handler) {
         PluginManager pm = groovy.getServer().getPluginManager();
         pm.disablePlugin(handler);
-        if (handler.getCommands() != 0) {
+        if (!handler.getCommands().isEmpty()) {
             try {
                 SimpleCommandMap commandMap = (SimpleCommandMap) SIMPLE_PLUGIN_MANAGER_commandMap.get(pm);
                 Map<String, Command> knownCommands = (Map<String, Command>) SIMPLE_COMMAND_MAP_knownCommands.get(commandMap);
