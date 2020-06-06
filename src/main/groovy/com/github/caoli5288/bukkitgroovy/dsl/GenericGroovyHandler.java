@@ -52,7 +52,10 @@ public class GenericGroovyHandler extends GroovyHandler {
             apply(closure);
         }
         for (ICancellable cancellable : cancels) {
-            cancellable.cancel();
+            try {
+                cancellable.cancel();
+            } catch (Exception e) {
+            }
         }
         cancels.clear();
     }

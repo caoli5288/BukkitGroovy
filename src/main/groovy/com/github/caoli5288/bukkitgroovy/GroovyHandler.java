@@ -1,21 +1,25 @@
 package com.github.caoli5288.bukkitgroovy;
 
+import com.github.caoli5288.bukkitgroovy.handled.HandledTask;
 import com.github.caoli5288.bukkitgroovy.util.Traits;
 import com.github.caoli5288.bukkitgroovy.util.Utils;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
 import lombok.SneakyThrows;
+import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.Listener;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.PluginBase;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginLogger;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,11 +33,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class GroovyHandler extends PluginBase implements Traits {
+public class GroovyHandler extends PluginBase implements Listener, Traits {
 
     private final Map<String, Closure<?>> commands = new HashMap<>();
 
-    private Server server;
     private GroovyHandledLoader loader;
     private File container;
     private PluginDescriptionFile description;
@@ -43,8 +46,7 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
     private boolean enabled;
     private boolean naggable = true;
 
-    final void init(Server server, GroovyHandledLoader loader, File container, PluginDescriptionFile description) {
-        this.server = server;
+    final void init(GroovyHandledLoader loader, File container, PluginDescriptionFile description) {
         this.loader = loader;
         this.container = container;
         this.description = description;
@@ -115,7 +117,7 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
     }
 
     public Server getServer() {
-        return server;
+        return Bukkit.getServer();
     }
 
     public boolean isEnabled() {
@@ -188,5 +190,17 @@ public abstract class GroovyHandler extends PluginBase implements Traits {
                 onDisable();
             }
         }
+    }
+
+    public BukkitTask task(Closure<?> closure) {
+        return new HandledTask(closure).runTask(this);
+    }
+
+    public BukkitTask task(int delay, Closure<?> closure) {
+        return new HandledTask(closure).runTaskLater(this, delay);
+    }
+
+    public BukkitTask task(int delay, int repeat, Closure<?> closure) {
+        return new HandledTask(closure).runTaskTimer(this, delay, repeat);
     }
 }

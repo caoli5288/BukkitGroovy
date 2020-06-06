@@ -149,7 +149,7 @@ public class Handlers {
                 if (handler == null) {
                     handler = new GenericGroovyHandler(obj);
                 }
-                handler.init(groovy.getServer(), loader, container, new PluginDescriptionFile(container.getName(), obj.getVersion(), "plugin.groovy"));
+                handler.init(loader, container, new PluginDescriptionFile(container.getName(), obj.getVersion(), "plugin.groovy"));
                 handlers.put(handler.getName(), handler);
                 // and then enable it
                 groovy.getServer().getPluginManager().enablePlugin(handler);
