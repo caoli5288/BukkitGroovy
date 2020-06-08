@@ -158,7 +158,7 @@ public abstract class GroovyHandler extends PluginBase implements Listener, Trai
         if (closure != null) {
             int parameters = closure.getMaximumNumberOfParameters();
             try {
-                if (parameters >= 2) {
+                if (parameters == 2) {
                     closure.call(sender, params);
                 } else {
                     closure.call(sender);

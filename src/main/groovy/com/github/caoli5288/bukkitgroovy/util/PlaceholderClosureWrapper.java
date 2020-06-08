@@ -16,7 +16,7 @@ public class PlaceholderClosureWrapper extends PlaceholderHook {
     @Override
     public String onPlaceholderRequest(Player player, String param) {
         int parameters = closure.getMaximumNumberOfParameters();
-        if (parameters >= 2) {
+        if (parameters == 2) {
             return String.valueOf(closure.call(player, param));
         }
         return String.valueOf(closure.call(player));
