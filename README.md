@@ -38,7 +38,7 @@ listeners {
     }
 }
 // events with priority
-listeners "HIGHEST", {
+listeners("HIGHEST") {
     EntityDamageByEntityEvent {
         it.cancelled = true
     }
@@ -55,7 +55,7 @@ placeholders {
 
 enable {
     logger.info "hello, world"
-    config.set("") // reads config.yml in plugins/BukkitGroovy/<name>/
+    config.set("") // reads plugins/BukkitGroovy/<name>/config.yml
     saveConfig()
     
     a = getResource("a.txt")
@@ -69,7 +69,7 @@ disable {
     server.shutdown()
 }
 
-version = "x.y.z"
+version = "x.y.z" // optional
 ```
 
 ## Groovy scripts
@@ -96,7 +96,8 @@ Create `plugin.groovy` includes line.
 
 ```groovy
 // plugin.groovy
-handler = new Foo()
+main = new Foo()
+version = "1.0" // optional
 ```
 
 ## Groovy oneshot scripts

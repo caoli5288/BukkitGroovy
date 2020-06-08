@@ -145,7 +145,7 @@ public class Handlers {
                 script.setDelegate(obj);
                 script.run();
                 // load handler
-                GroovyHandler handler = obj.getHandler();
+                GroovyHandler handler = obj.getMain();
                 if (handler == null) {
                     handler = new GenericGroovyHandler(obj);
                 }

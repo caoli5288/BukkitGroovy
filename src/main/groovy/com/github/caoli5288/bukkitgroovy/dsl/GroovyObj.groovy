@@ -15,7 +15,7 @@ class GroovyObj {
     Contexts commands = new Contexts()
     Contexts placeholders = new Contexts()
     List<ListenerObj> listeners = []
-    GroovyHandler handler
+    GroovyHandler main
 
     def enable(Closure closure) {
         enable = closure
@@ -30,19 +30,14 @@ class GroovyObj {
     }
 
     def listeners(String priority, Closure closure) {
-        def order = EventPriority.valueOf(priority)
+        listeners(EventPriority.valueOf(priority), closure)
+    }
+
+    def listeners(EventPriority priority = EventPriority.NORMAL, Closure closure) {
         def context = new Contexts()
         context.with closure
         context.visit() { k, v ->
-            listeners << new ListenerObj(priority: order, name: k, closure: v[0] as Closure)
-        }
-    }
-
-    def listeners(Closure closure) {
-        def context = new Contexts()
-        context.with closure
-        context.visit { k, v ->
-            listeners << new ListenerObj(priority: EventPriority.NORMAL, name: k, closure: v[0] as Closure)
+            listeners << new ListenerObj(priority: priority, name: k, closure: v[0] as Closure)
         }
     }
 
